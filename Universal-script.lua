@@ -141,15 +141,6 @@ local function toggleESP(state)
     end
 end
 
--- Toggle einfügen
-local Toggle = VisualTab:CreateToggle({
-    Name = "ESP",
-    CurrentValue = false,
-    Flag = "EspToggle",
-    Callback = function(Value)
-        toggleESP(Value)
-    end,
-})
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
