@@ -9,6 +9,7 @@ local localPlayer = players.LocalPlayer
 local espEnabled = false
 local espConnections = {}
 
+
 -- Event, um den WalkSpeed nach Respawn zu setzen
 player.CharacterAdded:Connect(function(character)
     character:WaitForChild("Humanoid").WalkSpeed = defaultWalkSpeed
@@ -54,11 +55,10 @@ end)
 -- Funktion zum Erstellen eines ESP für einen Spieler
 
 
--- Funktion: Erstelle ESP für Spieler
+-- Funktion: Erstelle ESP für einen Spieler
 local function createESP(player)
     if player == localPlayer then return end -- Ignoriere den lokalen Spieler
 
-    -- Charakter prüfen und auf Hinzufügen warten
     local function addESP(character)
         if not character:FindFirstChild("HumanoidRootPart") then
             character:WaitForChild("HumanoidRootPart")
@@ -68,15 +68,15 @@ local function createESP(player)
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "ESP"
         billboardGui.Adornee = character.HumanoidRootPart
-        billboardGui.Size = UDim2.new(6, 0, 3, 0)
+        billboardGui.Size = UDim2.new(6, 0, 1.5, 0) -- Größerer Textbereich
         billboardGui.AlwaysOnTop = true
 
         -- TextLabel für den Namen und HP
         local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboardGui
-        textLabel.Size = UDim2.new(5, 0, 5, 0)
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
         textLabel.BackgroundTransparency = 1
-        textLabel.TextColor3 = Color3.new(1, 1, 1) -- Weißer Text
+        textLabel.TextColor3 = Color3.new(1, 0, 0) -- Roter Text
         textLabel.TextStrokeTransparency = 0.5 -- Kontur
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.TextScaled = true
@@ -84,11 +84,22 @@ local function createESP(player)
 
         billboardGui.Parent = character.HumanoidRootPart
 
+        -- Erstelle SelectionBox
+        local selectionBox = Instance.new("SelectionBox")
+        selectionBox.Name = "ESP_SelectionBox"
+        selectionBox.Adornee = character
+        selectionBox.LineThickness = 0.05 -- Dickere Linien
+        selectionBox.SurfaceColor3 = Color3.new(1, 0, 0) -- Rote Umrandung
+        selectionBox.SurfaceTransparency = 0.7
+        selectionBox.Color3 = Color3.new(1, 0, 0)
+        selectionBox.Parent = character
+
         -- Verbindung zur Lebenspunktaktualisierung
         local connection
         connection = game:GetService("RunService").RenderStepped:Connect(function()
             if not espEnabled or not character:FindFirstChild("Humanoid") then
                 billboardGui:Destroy()
+                selectionBox:Destroy()
                 connection:Disconnect()
             else
                 textLabel.Text = player.Name .. " [HP: " .. math.floor(character.Humanoid.Health) .. "]"
@@ -115,10 +126,15 @@ local function removeAllESP()
     espConnections = {}
 
     for _, player in ipairs(players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local espGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
+        if player.Character then
+            -- Entferne BillboardGui und SelectionBox
+            local espGui = player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart:FindFirstChild("ESP")
             if espGui then
                 espGui:Destroy()
+            end
+            local selectionBox = player.Character:FindFirstChild("ESP_SelectionBox")
+            if selectionBox then
+                selectionBox:Destroy()
             end
         end
     end
@@ -140,6 +156,7 @@ local function toggleESP(state)
         removeAllESP()
     end
 end
+
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------
