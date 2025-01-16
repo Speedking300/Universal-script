@@ -7,6 +7,7 @@ local defaultWalkSpeed = 16 -- Standard-Wert für den Slider
 local players = game:GetService("Players")
 local localPlayer = players.LocalPlayer
 local espEnabled = false
+local espConnections = {}
 
 -- Event, um den WalkSpeed nach Respawn zu setzen
 player.CharacterAdded:Connect(function(character)
@@ -51,77 +52,104 @@ end)
 --For esp
 
 -- Funktion zum Erstellen eines ESP für einen Spieler
+
+
+-- Funktion: Erstelle ESP für Spieler
 local function createESP(player)
-    print("Erstelle ESP für Spieler: " .. player.Name)
-    
-    -- Warte, bis der Charakter verfügbar ist
-    player.CharacterAdded:Connect(function(character)
-        character:WaitForChild("HumanoidRootPart")
+    if player == localPlayer then return end -- Ignoriere den lokalen Spieler
+
+    -- Charakter prüfen und auf Hinzufügen warten
+    local function addESP(character)
+        if not character:FindFirstChild("HumanoidRootPart") then
+            character:WaitForChild("HumanoidRootPart")
+        end
+
+        -- Erstelle BillboardGui
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "ESP"
         billboardGui.Adornee = character.HumanoidRootPart
         billboardGui.Size = UDim2.new(4, 0, 1, 0)
         billboardGui.AlwaysOnTop = true
 
+        -- TextLabel für den Namen und HP
         local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboardGui
         textLabel.Size = UDim2.new(1, 0, 1, 0)
         textLabel.BackgroundTransparency = 1
-        textLabel.TextColor3 = Color3.new(1, 1, 1)
-        textLabel.TextStrokeTransparency = 0.5
+        textLabel.TextColor3 = Color3.new(1, 1, 1) -- Weißer Text
+        textLabel.TextStrokeTransparency = 0.5 -- Kontur
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.TextScaled = true
+        textLabel.Text = player.Name .. " [HP: ???]" -- Standardtext
 
-        textLabel.Text = player.Name
         billboardGui.Parent = character.HumanoidRootPart
 
-        -- Aktualisiere die Lebenspunkte
-        local updateConnection
-        updateConnection = game:GetService("RunService").RenderStepped:Connect(function()
-            if espEnabled and character:FindFirstChild("Humanoid") then
-                textLabel.Text = player.Name .. " [" .. math.floor(character.Humanoid.Health) .. "]"
+        -- Verbindung zur Lebenspunktaktualisierung
+        local connection
+        connection = game:GetService("RunService").RenderStepped:Connect(function()
+            if not espEnabled or not character:FindFirstChild("Humanoid") then
+                billboardGui:Destroy()
+                connection:Disconnect()
             else
-                if updateConnection then
-                    updateConnection:Disconnect()
-                end
-                if billboardGui then
-                    billboardGui:Destroy()
-                end
+                textLabel.Text = player.Name .. " [HP: " .. math.floor(character.Humanoid.Health) .. "]"
             end
         end)
-    end)
+
+        table.insert(espConnections, connection)
+    end
+
+    -- Füge ESP hinzu, wenn der Charakter vorhanden ist
+    if player.Character then
+        addESP(player.Character)
+    end
+
+    -- Warte auf neue Charaktere
+    player.CharacterAdded:Connect(addESP)
 end
 
--- ESP für alle Spieler aktivieren/deaktivieren
-local function toggleESP(state)
-    espEnabled = state
-    print("ESP Status: " .. tostring(espEnabled))
-    if espEnabled then
-        -- Füge ESP für alle existierenden Spieler hinzu
-        for _, player in ipairs(players:GetPlayers()) do
-            if player ~= localPlayer then
-                createESP(player)
-            end
-        end
+-- Funktion: Entferne alle ESPs
+local function removeAllESP()
+    for _, connection in ipairs(espConnections) do
+        connection:Disconnect()
+    end
+    espConnections = {}
 
-        -- Füge ESP für neue Spieler hinzu
-        players.PlayerAdded:Connect(function(player)
-            if player ~= localPlayer then
-                createESP(player)
-            end
-        end)
-    else
-        -- Entferne alle ESP-GUIs
-        for _, player in ipairs(players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local espGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
-                if espGui then
-                    espGui:Destroy()
-                end
+    for _, player in ipairs(players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local espGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
+            if espGui then
+                espGui:Destroy()
             end
         end
     end
 end
+
+-- Funktion: ESP umschalten
+local function toggleESP(state)
+    espEnabled = state
+
+    if espEnabled then
+        -- Aktiviere ESP für alle existierenden Spieler
+        for _, player in ipairs(players:GetPlayers()) do
+            createESP(player)
+        end
+
+        -- Neue Spieler hinzufügen
+        players.PlayerAdded:Connect(createESP)
+    else
+        removeAllESP()
+    end
+end
+
+-- Toggle einfügen
+local Toggle = VisualTab:CreateToggle({
+    Name = "ESP",
+    CurrentValue = false,
+    Flag = "EspToggle",
+    Callback = function(Value)
+        toggleESP(Value)
+    end,
+})
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
