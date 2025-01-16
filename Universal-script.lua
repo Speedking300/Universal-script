@@ -4,6 +4,9 @@ local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local player = game.Players.LocalPlayer
 local defaultWalkSpeed = 16 -- Standard-Wert für den Slider
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local espEnabled = false
 
 -- Event, um den WalkSpeed nach Respawn zu setzen
 player.CharacterAdded:Connect(function(character)
@@ -47,23 +50,20 @@ end)
 
 --For esp
 
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
-local espEnabled = false
-
+-- Funktion zum Erstellen eines ESP für einen Spieler
 local function createESP(player)
+    print("Erstelle ESP für Spieler: " .. player.Name)
+    
+    -- Warte, bis der Charakter verfügbar ist
     player.CharacterAdded:Connect(function(character)
         character:WaitForChild("HumanoidRootPart")
         local billboardGui = Instance.new("BillboardGui")
-        local textLabel = Instance.new("TextLabel")
-
-        
         billboardGui.Name = "ESP"
-        billboardGui.Adornee = character:WaitForChild("HumanoidRootPart")
+        billboardGui.Adornee = character.HumanoidRootPart
         billboardGui.Size = UDim2.new(4, 0, 1, 0)
         billboardGui.AlwaysOnTop = true
 
-      
+        local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboardGui
         textLabel.Size = UDim2.new(1, 0, 1, 0)
         textLabel.BackgroundTransparency = 1
@@ -72,39 +72,51 @@ local function createESP(player)
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.TextScaled = true
 
-        -- Aktualisiere den Text dynamisch
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if espEnabled and character and character:FindFirstChild("Humanoid") then
+        textLabel.Text = player.Name
+        billboardGui.Parent = character.HumanoidRootPart
+
+        -- Aktualisiere die Lebenspunkte
+        local updateConnection
+        updateConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if espEnabled and character:FindFirstChild("Humanoid") then
                 textLabel.Text = player.Name .. " [" .. math.floor(character.Humanoid.Health) .. "]"
-            elseif not espEnabled and billboardGui then
-                billboardGui:Destroy()
+            else
+                if updateConnection then
+                    updateConnection:Disconnect()
+                end
+                if billboardGui then
+                    billboardGui:Destroy()
+                end
             end
         end)
-
-        billboardGui.Parent = character:WaitForChild("HumanoidRootPart")
     end)
 end
 
-
+-- ESP für alle Spieler aktivieren/deaktivieren
 local function toggleESP(state)
     espEnabled = state
+    print("ESP Status: " .. tostring(espEnabled))
     if espEnabled then
+        -- Füge ESP für alle existierenden Spieler hinzu
         for _, player in ipairs(players:GetPlayers()) do
             if player ~= localPlayer then
                 createESP(player)
             end
         end
+
+        -- Füge ESP für neue Spieler hinzu
         players.PlayerAdded:Connect(function(player)
             if player ~= localPlayer then
                 createESP(player)
             end
         end)
     else
+        -- Entferne alle ESP-GUIs
         for _, player in ipairs(players:GetPlayers()) do
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local billboardGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
-                if billboardGui then
-                    billboardGui:Destroy()
+                local espGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
+                if espGui then
+                    espGui:Destroy()
                 end
             end
         end
@@ -116,7 +128,7 @@ end
 local Window = Rayfield:CreateWindow({
    Name = "Universal ✔",
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Universal V0.9 Alpha",
+   LoadingTitle = "TEst",
    LoadingSubtitle = "By Speedking",
    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
 
