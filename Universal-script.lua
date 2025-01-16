@@ -68,13 +68,13 @@ local function createESP(player)
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "ESP"
         billboardGui.Adornee = character.HumanoidRootPart
-        billboardGui.Size = UDim2.new(4, 0, 1, 0)
+        billboardGui.Size = UDim2.new(6, 0, 3, 0)
         billboardGui.AlwaysOnTop = true
 
         -- TextLabel für den Namen und HP
         local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboardGui
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.Size = UDim2.new(5, 0, 5, 0)
         textLabel.BackgroundTransparency = 1
         textLabel.TextColor3 = Color3.new(1, 1, 1) -- Weißer Text
         textLabel.TextStrokeTransparency = 0.5 -- Kontur
