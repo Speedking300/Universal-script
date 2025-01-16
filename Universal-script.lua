@@ -45,13 +45,78 @@ end)
 
     
 
+--For esp
+
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local espEnabled = false
+
+local function createESP(player)
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("HumanoidRootPart")
+        local billboardGui = Instance.new("BillboardGui")
+        local textLabel = Instance.new("TextLabel")
+
+        
+        billboardGui.Name = "ESP"
+        billboardGui.Adornee = character:WaitForChild("HumanoidRootPart")
+        billboardGui.Size = UDim2.new(4, 0, 1, 0)
+        billboardGui.AlwaysOnTop = true
+
+      
+        textLabel.Parent = billboardGui
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.new(1, 1, 1)
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextScaled = true
+
+        -- Aktualisiere den Text dynamisch
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if espEnabled and character and character:FindFirstChild("Humanoid") then
+                textLabel.Text = player.Name .. " [" .. math.floor(character.Humanoid.Health) .. "]"
+            elseif not espEnabled and billboardGui then
+                billboardGui:Destroy()
+            end
+        end)
+
+        billboardGui.Parent = character:WaitForChild("HumanoidRootPart")
+    end)
+end
 
 
+local function toggleESP(state)
+    espEnabled = state
+    if espEnabled then
+        for _, player in ipairs(players:GetPlayers()) do
+            if player ~= localPlayer then
+                createESP(player)
+            end
+        end
+        players.PlayerAdded:Connect(function(player)
+            if player ~= localPlayer then
+                createESP(player)
+            end
+        end)
+    else
+        for _, player in ipairs(players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local billboardGui = player.Character.HumanoidRootPart:FindFirstChild("ESP")
+                if billboardGui then
+                    billboardGui:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------
 
 local Window = Rayfield:CreateWindow({
    Name = "Universal ✔",
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "TEst",
+   LoadingTitle = "Universal V0.9 Alpha",
    LoadingSubtitle = "By Speedking",
    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
 
@@ -131,7 +196,7 @@ end
 local Toggle = MainTab:CreateToggle({
     Name = "Noclip",
     CurrentValue = false,
-    Flag = "EspToggle", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = "NoclipToggle", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
         setNoclip(Value) -- Activate or deactivate No-Clip based on toggle value
     end
@@ -143,7 +208,7 @@ local Slider = MainTab:CreateSlider({
    Increment = 1,
    Suffix = "Speed",
    CurrentValue = 16,
-   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "Walkspeed", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       defaultWalkSpeed = Value -- Speichere den neuen WalkSpeed-Wert
       if player.Character and player.Character:FindFirstChild("Humanoid") then
@@ -152,5 +217,13 @@ local Slider = MainTab:CreateSlider({
    end,
 })
 
+local Toggle = VisualTab:CreateToggle({
+    Name = "Esp",
+    CurrentValue = false,
+    Flag = "EspToggle", 
+    Callback = function(Value)
+        toggleESP(Value)
+    end
+})
 
 
