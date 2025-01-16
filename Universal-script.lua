@@ -55,7 +55,6 @@ end)
 -- Funktion zum Erstellen eines ESP für einen Spieler
 
 
--- Funktion: Erstelle ESP für einen Spieler
 local function createESP(player)
     if player == localPlayer then return end -- Ignoriere den lokalen Spieler
 
@@ -64,14 +63,14 @@ local function createESP(player)
             character:WaitForChild("HumanoidRootPart")
         end
 
-        -- Erstelle BillboardGui
+        -- Erstelle BillboardGui (Text-Anzeige)
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Name = "ESP"
         billboardGui.Adornee = character.HumanoidRootPart
-        billboardGui.Size = UDim2.new(6, 0, 1.5, 0) -- Größerer Textbereich
+        billboardGui.Size = UDim2.new(6, 0, 1.5, 0) -- Größere Anzeige
         billboardGui.AlwaysOnTop = true
 
-        -- TextLabel für den Namen und HP
+        -- TextLabel für Namen und HP
         local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboardGui
         textLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -84,17 +83,16 @@ local function createESP(player)
 
         billboardGui.Parent = character.HumanoidRootPart
 
-        -- Erstelle SelectionBox
+        -- Erstelle SelectionBox (Markierung um den Charakter)
         local selectionBox = Instance.new("SelectionBox")
         selectionBox.Name = "ESP_SelectionBox"
         selectionBox.Adornee = character
         selectionBox.LineThickness = 0.05 -- Dickere Linien
-        selectionBox.SurfaceColor3 = Color3.new(1, 0, 0) -- Rote Umrandung
-        selectionBox.SurfaceTransparency = 0.7
-        selectionBox.Color3 = Color3.new(1, 0, 0)
+        selectionBox.Color3 = Color3.new(1, 0, 0) -- Rote Umrandung
+        selectionBox.SurfaceTransparency = 0 -- Keine Transparenz (durch Wände sichtbar)
         selectionBox.Parent = character
 
-        -- Verbindung zur Lebenspunktaktualisierung
+        -- Verbindung zur Aktualisierung der Lebenspunkte
         local connection
         connection = game:GetService("RunService").RenderStepped:Connect(function()
             if not espEnabled or not character:FindFirstChild("Humanoid") then
