@@ -84,20 +84,13 @@ local function createESP(player)
         billboardGui.Parent = character.HumanoidRootPart
 
         -- Erstelle SelectionBox (Markierung um den Charakter)
-        local selectionBox = Instance.new("SelectionBox")
-        selectionBox.Name = "ESP_SelectionBox"
-        selectionBox.Adornee = character
-        selectionBox.LineThickness = 0.05 -- Dickere Linien
-        selectionBox.Color3 = Color3.new(1, 0, 0) -- Rote Umrandung
-        selectionBox.SurfaceTransparency = 0 -- Keine Transparenz (durch Wände sichtbar)
-        selectionBox.Parent = character
+        
 
         -- Verbindung zur Aktualisierung der Lebenspunkte
         local connection
         connection = game:GetService("RunService").RenderStepped:Connect(function()
             if not espEnabled or not character:FindFirstChild("Humanoid") then
                 billboardGui:Destroy()
-                selectionBox:Destroy()
                 connection:Disconnect()
             else
                 textLabel.Text = player.Name .. " [HP: " .. math.floor(character.Humanoid.Health) .. "]"
@@ -129,10 +122,6 @@ local function removeAllESP()
             local espGui = player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart:FindFirstChild("ESP")
             if espGui then
                 espGui:Destroy()
-            end
-            local selectionBox = player.Character:FindFirstChild("ESP_SelectionBox")
-            if selectionBox then
-                selectionBox:Destroy()
             end
         end
     end
